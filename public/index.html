@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini Voice Bot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0b0b;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    button {
+      background: #00bcd4;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover { background: #008c9e; }
+    #response { margin-top: 20px; max-width: 600px; }
+  </style>
+</head>
+<body>
+  <h1>🎙️ Gemini Voice Bot</h1>
+  <p>Ask me anything — by voice or text!</p>
+
+  <input id="textInput" type="text" placeholder="Type your question here..." style="padding:10px; width:60%; border-radius:6px; border:none;" />
+  <button id="sendBtn">Send</button>
+  <button id="voiceBtn">🎤 Speak</button>
+
+  <div id="response"></div>
+
+  <script>
+    async function sendMessage(text) {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      const data = await res.json();
+      document.getElementById("response").innerText = data.response;
+      speakResponse(data.response);
+    }
+
+    function speakResponse(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      speechSynthesis.speak(utter);
+    }
+
+    document.getElementById("sendBtn").onclick = () => {
+      const input = document.getElementById("textInput").value.trim();
+      if (input) sendMessage(input);
+    };
+
+    // 🎤 Voice input
+    document.getElementById("voiceBtn").onclick = () => {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("textInput").value = transcript;
+        sendMessage(transcript);
+      };
+      recognition.start();
+    };
+  </script>
+</body>
+</html>
